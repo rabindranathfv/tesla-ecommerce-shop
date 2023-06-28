@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  postgres_db:
+    image: postgres:14.3
+    container_name: postgress_db_dev
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
