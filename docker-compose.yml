@@ -4,10 +4,12 @@ services:
   postgres_db:
     image: postgres:14.3
     container_name: postgress_db_dev
+    env_file:
+      - .env.development.local
     ports:
       - 5432:5432
-    environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+    # environment:
+    #   POSTGRES_PASSWORD: ${DB_PASSWORD}
+    #   POSTGRES_DB: ${DB_NAME}
     volumes:
       - ./postgres:/var/lib/postgresql/data
