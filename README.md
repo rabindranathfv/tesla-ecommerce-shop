@@ -24,7 +24,7 @@
 
 ## Config enviroments variables
 
-you must check `.env.template` and replicate those variables in your case
+you must check `.env.template` and replicate those variables in a file called `.env.<NODE_ENV>.local` in your case
 
 ## Installation
 
