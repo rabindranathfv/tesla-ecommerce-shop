@@ -27,5 +27,8 @@ export class Product {
   stock: number;
 
   @Column('text', { array: true })
-  size: string[];
+  sizes: string[];
+
+  @Column('text')
+  gender: string;
 }
