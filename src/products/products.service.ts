@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,6 +12,7 @@ import { Product } from './entities/product.entity';
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
@@ -23,9 +29,7 @@ export class ProductsService {
         '🚀 ~ file: products.service.ts:19 ~ ProductsService ~ create ~ error:',
         error,
       );
-      throw new InternalServerErrorException(
-        'something when wrong, server side error',
-      );
+      this.handleDBExceptions(error);
     }
   }
 
@@ -39,9 +43,7 @@ export class ProductsService {
         '🚀 ~ file: products.service.ts:38 ~ ProductsService ~ findAll ~ error:',
         error,
       );
-      throw new InternalServerErrorException(
-        'something when wrong, server side error',
-      );
+      this.handleDBExceptions(error);
     }
   }
 
@@ -51,27 +53,31 @@ export class ProductsService {
 
       return productInfo;
     } catch (error) {
-      throw new InternalServerErrorException(
-        'something when wrong, server side error',
-      );
+      this.handleDBExceptions(error);
     }
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
     try {
     } catch (error) {
-      throw new InternalServerErrorException(
-        'something when wrong, server side error',
-      );
+      this.handleDBExceptions(error);
     }
   }
 
   async remove(id: string) {
     try {
     } catch (error) {
-      throw new InternalServerErrorException(
-        'something when wrong, server side error',
-      );
+      this.handleDBExceptions(error);
     }
+  }
+
+  private handleDBExceptions(error: any) {
+    if (error.code === '23505') {
+      throw new BadRequestException(error.detail);
+    }
+    this.logger.error(error);
+    throw new InternalServerErrorException(
+      'something when wrong, server side error',
+    );
   }
 }
