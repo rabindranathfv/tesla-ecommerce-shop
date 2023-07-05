@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,25 +14,64 @@ export class ProductsService {
 
   async create(createProductDto: CreateProductDto) {
     try {
-      
+      const product = await this.productRepository.create(createProductDto);
+      await this.productRepository.save(product);
+
+      return product;
     } catch (error) {
-      
+      console.log(
+        '🚀 ~ file: products.service.ts:19 ~ ProductsService ~ create ~ error:',
+        error,
+      );
+      throw new InternalServerErrorException(
+        'something when wrong, server side error',
+      );
     }
   }
 
   async findAll() {
-    return `This action returns all products`;
+    try {
+      const products = await this.productRepository.find();
+
+      return products;
+    } catch (error) {
+      console.log(
+        '🚀 ~ file: products.service.ts:38 ~ ProductsService ~ findAll ~ error:',
+        error,
+      );
+      throw new InternalServerErrorException(
+        'something when wrong, server side error',
+      );
+    }
   }
 
-  async findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne(id: string) {
+    try {
+      const productInfo = await this.productRepository.findBy({ id });
+
+      return productInfo;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'something when wrong, server side error',
+      );
+    }
   }
 
-  async update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    try {
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'something when wrong, server side error',
+      );
+    }
   }
 
-  async remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: string) {
+    try {
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'something when wrong, server side error',
+      );
+    }
   }
 }
