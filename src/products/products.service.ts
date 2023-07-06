@@ -85,6 +85,15 @@ export class ProductsService {
 
   async update(id: string, updateProductDto: UpdateProductDto) {
     try {
+      const product = await this.productRepository.preload({
+        id: id,
+        ...updateProductDto,
+      });
+
+      // TODO: el metodo save mantiene las operaciones en cascada onDelete, onUpdate mientras que el metodo update NO
+      const updProd = await this.productRepository.save(product);
+
+      return updProd;
     } catch (error) {
       this.handleDBExceptions(error);
     }
