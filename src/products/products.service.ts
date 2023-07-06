@@ -66,6 +66,14 @@ export class ProductsService {
 
   async remove(id: string) {
     try {
+      const product = await this.findOne(id);
+      const deleteProd = await this.productRepository.remove(product);
+      console.log(
+        '🚀 ~ file: products.service.ts:71 ~ ProductsService ~ remove ~ deleteProd:',
+        deleteProd,
+      );
+
+      return deleteProd;
     } catch (error) {
       this.handleDBExceptions(error);
     }
