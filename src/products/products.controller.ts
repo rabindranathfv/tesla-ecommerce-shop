@@ -8,10 +8,12 @@ import {
   Delete,
   NotFoundException,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -23,15 +25,17 @@ export class ProductsController {
   }
 
   @Get()
-  async findAll() {
-    return await this.productsService.findAll();
+  async findAll(@Query() paginationDto: PaginationDto) {
+    return await this.productsService.findAll(paginationDto);
   }
 
-  @Get(':id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    const product = await this.productsService.findOne(id);
+  @Get(':criteria')
+  async findOne(@Param('criteria') criteria: string) {
+    const product = await this.productsService.findOne(criteria);
     if (!product) {
-      throw new NotFoundException(`product ${id} doesn't exist`);
+      throw new NotFoundException(
+        `finding product with ${criteria} doesn't exist`,
+      );
     }
 
     return product;
@@ -49,7 +53,7 @@ export class ProductsController {
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     const deletedProd = await this.productsService.remove(id);
 
-    if (!deletedProd.length) {
+    if (!deletedProd) {
       throw new NotFoundException(`product ${id} doesn't exist`);
     }
 

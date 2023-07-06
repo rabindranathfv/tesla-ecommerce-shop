@@ -4,11 +4,15 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { validate as IsUUID } from 'uuid';
+
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+
 import { Product } from './entities/product.entity';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ProductsService {
@@ -33,9 +37,13 @@ export class ProductsService {
     }
   }
 
-  async findAll() {
+  async findAll(paginationDto: PaginationDto) {
     try {
-      const products = await this.productRepository.find();
+      const { limit = 10, offset = 0 } = paginationDto;
+      const products = await this.productRepository.find({
+        take: limit,
+        skip: offset,
+      });
 
       return products;
     } catch (error) {
@@ -47,9 +55,27 @@ export class ProductsService {
     }
   }
 
-  async findOne(id: string) {
+  async findOne(criteria: string) {
     try {
-      const productInfo = await this.productRepository.findBy({ id });
+      let productInfo: Product;
+
+      if (IsUUID(criteria)) {
+        productInfo = await this.productRepository.findOneBy({ id: criteria });
+      } else {
+        const queryBuilder = await this.productRepository.createQueryBuilder();
+        //TODO: Busqueda por titulo transformado a minusculas, buscar usando el operador LIKE para el titulo y el slug conteniendo el string buscado
+        productInfo = await queryBuilder
+          .where(
+            'LOWER(title) =:title or LOWER(title) LIKE :titleReg or slug =:slug or slug LIKE :slugReg',
+            {
+              title: criteria.toLowerCase(),
+              titleReg: `%${criteria.toLowerCase()}%`,
+              slug: criteria,
+              slugReg: `%${criteria}%`,
+            },
+          )
+          .getOne();
+      }
 
       return productInfo;
     } catch (error) {
@@ -80,6 +106,10 @@ export class ProductsService {
   }
 
   private handleDBExceptions(error: any) {
+    console.log(
+      '🚀 ~ file: products.service.ts:103 ~ ProductsService ~ handleDBExceptions ~ error:',
+      error,
+    );
     if (error.code === '23505') {
       throw new BadRequestException(error.detail);
     }
