@@ -13,6 +13,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 
 import { Product } from './entities/product.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { ProductImage } from './entities/product-image.entity';
 
 @Injectable()
 export class ProductsService {
@@ -20,14 +21,22 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductImage)
+    private readonly productImageRepository: Repository<ProductImage>,
   ) {}
 
   async create(createProductDto: CreateProductDto) {
     try {
-      const product = await this.productRepository.create(createProductDto);
+      const { images = [] } = createProductDto;
+      const product = await this.productRepository.create({
+        ...createProductDto,
+        images: images.map((img) =>
+          this.productImageRepository.create({ url: img }),
+        ),
+      });
       await this.productRepository.save(product);
 
-      return product;
+      return { ...product, images };
     } catch (error) {
       console.log(
         '🚀 ~ file: products.service.ts:19 ~ ProductsService ~ create ~ error:',
@@ -43,9 +52,15 @@ export class ProductsService {
       const products = await this.productRepository.find({
         take: limit,
         skip: offset,
+        relations: {
+          images: true,
+        },
       });
 
-      return products;
+      return products.map((product) => ({
+        ...product,
+        images: product.images.map((img) => img.url),
+      }));
     } catch (error) {
       console.log(
         '🚀 ~ file: products.service.ts:38 ~ ProductsService ~ findAll ~ error:',
@@ -60,9 +75,16 @@ export class ProductsService {
       let productInfo: Product;
 
       if (IsUUID(criteria)) {
-        productInfo = await this.productRepository.findOneBy({ id: criteria });
+        // using relations in findOneMethod
+        // productInfo = await this.productRepository.findOne({
+        //   where: { id: criteria },
+        //   relations: { images: true },
+        // });
+        productInfo = await this.productRepository.findOneBy({ id: criteria }); // con el eager true trae las relaciones
       } else {
-        const queryBuilder = await this.productRepository.createQueryBuilder();
+        const queryBuilder = await this.productRepository.createQueryBuilder(
+          'product',
+        );
         //TODO: Busqueda por titulo transformado a minusculas, buscar usando el operador LIKE para el titulo y el slug conteniendo el string buscado
         productInfo = await queryBuilder
           .where(
@@ -74,10 +96,14 @@ export class ProductsService {
               slugReg: `%${criteria}%`,
             },
           )
+          .leftJoinAndSelect('product.images', 'productImages')
           .getOne();
       }
 
-      return productInfo;
+      return {
+        ...productInfo,
+        images: productInfo.images.map((img) => img.url),
+      };
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -88,6 +114,7 @@ export class ProductsService {
       const product = await this.productRepository.preload({
         id: id,
         ...updateProductDto,
+        images: [],
       });
 
       // TODO: el metodo save mantiene las operaciones en cascada onDelete, onUpdate mientras que el metodo update NO
@@ -101,7 +128,7 @@ export class ProductsService {
 
   async remove(id: string) {
     try {
-      const product = await this.findOne(id);
+      const product = await this.productRepository.findOneBy({ id });
       const deleteProd = await this.productRepository.remove(product);
       console.log(
         '🚀 ~ file: products.service.ts:71 ~ ProductsService ~ remove ~ deleteProd:',
