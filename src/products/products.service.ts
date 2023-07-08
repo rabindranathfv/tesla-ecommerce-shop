@@ -14,6 +14,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ProductImage } from './entities/product-image.entity';
+import { query } from 'express';
 
 @Injectable()
 export class ProductsService {
@@ -169,6 +170,18 @@ export class ProductsService {
       );
 
       return deleteProd;
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+  }
+
+  // TODO: this method delete all products and productImages
+  async deleteAllProducts() {
+    const queryBuilder = await this.productRepository.createQueryBuilder(
+      'product',
+    );
+    try {
+      return await queryBuilder.delete().where({}).execute();
     } catch (error) {
       this.handleDBExceptions(error);
     }

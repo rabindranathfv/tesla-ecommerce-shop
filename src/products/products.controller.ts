@@ -59,4 +59,15 @@ export class ProductsController {
 
     return `product ${id} deleted`;
   }
+
+  @Delete()
+  async removeAll() {
+    const deletedProd = await this.productsService.deleteAllProducts();
+
+    if (!deletedProd) {
+      throw new NotFoundException(`can not delete all products`);
+    }
+
+    return `all products had been deleted`;
+  }
 }
