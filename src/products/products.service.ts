@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { validate as IsUUID } from 'uuid';
 
@@ -23,6 +23,7 @@ export class ProductsService {
     private readonly productRepository: Repository<Product>,
     @InjectRepository(ProductImage)
     private readonly productImageRepository: Repository<ProductImage>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createProductDto: CreateProductDto) {
@@ -109,19 +110,44 @@ export class ProductsService {
     }
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update(pid: string, updateProductDto: UpdateProductDto) {
+    const queryRunner = await this.dataSource.createQueryRunner();
     try {
+      const { images, ...productUpd } = updateProductDto;
+
       const product = await this.productRepository.preload({
-        id: id,
-        ...updateProductDto,
-        images: [],
+        id: pid,
+        ...productUpd,
       });
 
-      // TODO: el metodo save mantiene las operaciones en cascada onDelete, onUpdate mientras que el metodo update NO
-      const updProd = await this.productRepository.save(product);
+      // TODO: Query runner
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
 
-      return updProd;
+      if (images) {
+        await queryRunner.manager.delete(ProductImage, {
+          product: { id: pid },
+        });
+
+        product.images = images.map((img) =>
+          this.productImageRepository.create({ url: img }),
+        );
+      } else {
+        product.images = await this.productImageRepository.findBy({
+          product: { id: pid },
+        });
+      }
+
+      await queryRunner.manager.save(product);
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+
+      // TODO: el metodo save mantiene las operaciones en cascada onDelete, onUpdate mientras que el metodo update NO
+      // const updProd = await this.productRepository.save(product);
+      return product;
     } catch (error) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
       this.handleDBExceptions(error);
     }
   }
