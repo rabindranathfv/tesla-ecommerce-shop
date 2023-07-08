@@ -100,11 +100,17 @@ export class ProductsService {
           .leftJoinAndSelect('product.images', 'productImages')
           .getOne();
       }
+      console.log(
+        '🚀 ~ file: products.service.ts:102 ~ ProductsService ~ findOne ~ productInfo:',
+        productInfo,
+      );
 
-      return {
-        ...productInfo,
-        images: productInfo.images.map((img) => img.url),
-      };
+      return productInfo
+        ? {
+            ...productInfo,
+            images: productInfo.images.map((img) => img.url),
+          }
+        : productInfo;
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -153,6 +159,7 @@ export class ProductsService {
   }
 
   async remove(id: string) {
+    // TODO: can be done using transaccion approach
     try {
       const product = await this.productRepository.findOneBy({ id });
       const deleteProd = await this.productRepository.remove(product);
