@@ -43,6 +43,13 @@ $ docker compose up
 $ npm run start:dev
 ```
 
+## Run seeder endpoint
+
+```bash
+# you should consume this endpoint with postman
+$ get method --> URL/api/seed/
+```
+
 ## Test
 
 ```bash
