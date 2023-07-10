@@ -10,6 +10,7 @@ import {
 import { FilesService } from './files.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { fileNamer } from './helpers/fileName.helpers';
 
 @Controller('files')
 export class FilesController {
@@ -20,6 +21,7 @@ export class FilesController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: './static/uploads',
+        filename: fileNamer,
       }),
     }),
   )
