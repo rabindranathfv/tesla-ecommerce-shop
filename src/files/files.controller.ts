@@ -15,10 +15,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { fileNamer } from './helpers/fileName.helpers';
 import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(
+    private readonly filesService: FilesService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Get('product/:imageName')
   getImageByName(@Res() res: Response, @Param('imageName') imageName: string) {
@@ -47,10 +51,10 @@ export class FilesController {
     )
     file: Express.Multer.File,
   ) {
-    console.log(
-      '🚀 ~ file: files.controller.ts:10 ~ FilesController ~ uploadFile ~ file:',
-      file,
-    );
-    return file.originalname;
+    const hostApi = this.configService.get<string>('HOST_API');
+    const basePathApi = this.configService.get<string>('BASE_PATH_API');
+    const port = this.configService.get<string>('PORT');
+    const secureUrl = `${hostApi}:${port}/${basePathApi}/files/product/${file.filename}`;
+    return { secureUrl };
   }
 }
