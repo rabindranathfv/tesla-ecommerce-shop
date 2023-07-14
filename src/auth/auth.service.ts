@@ -4,18 +4,22 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import { hashSync, compareSync, genSaltSync } from 'bcrypt';
+
+import { CreateUserDto } from './dto/create-user.dto';
+import { User } from './entities/user.entity';
 import { LoginUserDto } from './dto/login-user.dto';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -32,9 +36,8 @@ export class AuthService {
 
       return {
         ...user,
-        // token: this.getJwtToken({ id: user.id }),
+        token: await this.getJwtToken({ email: user.email }),
       };
-      // TODO: Retornar el JWT de acceso
     } catch (error) {
       this.handleDBErrors(error);
     }
@@ -56,7 +59,7 @@ export class AuthService {
 
     return {
       ...user,
-      // token: this.getJwtToken({ id: user.id }),
+      token: await this.getJwtToken({ email: user.email }),
     };
   }
 
@@ -67,10 +70,10 @@ export class AuthService {
   //   };
   // }
 
-  // private getJwtToken(payload: JwtPayload) {
-  // const token = this.jwtService.sign(payload);
-  // return token;
-  // }
+  private async getJwtToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
+    return token;
+  }
 
   private handleDBErrors(error: any): never {
     console.log(

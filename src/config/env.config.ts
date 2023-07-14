@@ -6,4 +6,8 @@ export const loadConfig = () => ({
   DB_PORT: +process.env.DB_PORT || 5432,
   DB_USERNAME: process.env.DB_USERNAME || 'postgres',
   DB_PASSWORD: process.env.DB_PASSWORD,
+  JWT_SECRET: process.env.JWT_SECRET,
+  JWT_EXPIRE: process.env.JWT_EXPIRE || '1h',
+  HOST_API: process.env.HOST_API,
+  BASE_PATH_API: process.env.BASE_PATH_API,
 });
