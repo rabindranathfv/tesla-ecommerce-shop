@@ -1,7 +1,19 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Req,
+  Headers,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
+
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { IncomingHttpHeaders } from 'http';
 
 @Controller('auth')
 export class AuthController {
@@ -23,25 +35,25 @@ export class AuthController {
   //   return this.authService.checkAuthStatus(user);
   // }
 
-  // @Get('private')
-  // @UseGuards(AuthGuard())
-  // testingPrivateRoute(
-  //   @Req() request: Express.Request,
-  //   @GetUser() user: User,
-  //   @GetUser('email') userEmail: string,
+  @Get('private')
+  @UseGuards(AuthGuard())
+  testingPrivateRoute(
+    @Req() request: Request,
+    // @GetUser() user: User,
+    // @GetUser('email') userEmail: string,
 
-  //   @RawHeaders() rawHeaders: string[],
-  //   @Headers() headers: IncomingHttpHeaders,
-  // ) {
-  //   return {
-  //     ok: true,
-  //     message: 'Hola Mundo Private',
-  //     user,
-  //     userEmail,
-  //     rawHeaders,
-  //     headers,
-  //   };
-  // }
+    // @RawHeaders() rawHeaders: string[],
+    @Headers() headers: IncomingHttpHeaders,
+  ) {
+    return {
+      ok: true,
+      message: 'Hola Mundo Private',
+      // user,
+      // userEmail,
+      // rawHeaders,
+      headers,
+    };
+  }
 
   // @SetMetadata('roles', ['admin','super-user'])
 
