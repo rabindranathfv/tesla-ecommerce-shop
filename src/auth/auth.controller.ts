@@ -10,10 +10,18 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 
+import { IncomingHttpHeaders } from 'http';
 import { AuthService } from './auth.service';
+import { GetUser } from './decorators/get-user.decorator';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { IncomingHttpHeaders } from 'http';
+import { User } from './entities/user.entity';
+import { RawHeaders } from './decorators/raw-header.decorator';
+import { UserRoleGuard } from './guards/user-role/user-role.guard';
+import { RoleProtected } from './decorators/role-protected.decorator';
+import { ValidRoles } from './interfaces/valid-roles';
+import { Auth } from './decorators/auth.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -38,41 +46,40 @@ export class AuthController {
   @Get('private')
   @UseGuards(AuthGuard())
   testingPrivateRoute(
-    @Req() request: Request,
-    // @GetUser() user: User,
-    // @GetUser('email') userEmail: string,
+    @Req() req: Request,
+    @GetUser() user: User,
+    @GetUser(['email', 'fullName']) userEmail: User,
 
-    // @RawHeaders() rawHeaders: string[],
+    @RawHeaders() rawHeaders: string[],
     @Headers() headers: IncomingHttpHeaders,
   ) {
     return {
       ok: true,
       message: 'Hola Mundo Private',
-      // user,
-      // userEmail,
-      // rawHeaders,
+      user,
+      userEmail,
+      rawHeaders,
       headers,
     };
   }
 
-  // @SetMetadata('roles', ['admin','super-user'])
+  // @SetMetadata('roles', ['admin', 'super-user'])
+  @Get('/new/private')
+  @RoleProtected(ValidRoles.admin, ValidRoles.manager)
+  @UseGuards(AuthGuard(), UserRoleGuard)
+  privateRoute2(@GetUser() user: User) {
+    return {
+      ok: true,
+      user,
+    };
+  }
 
-  // @Get('private2')
-  // @RoleProtected(ValidRoles.superUser, ValidRoles.admin)
-  // @UseGuards(AuthGuard(), UserRoleGuard)
-  // privateRoute2(@GetUser() user: User) {
-  //   return {
-  //     ok: true,
-  //     user,
-  //   };
-  // }
-
-  // @Get('private3')
-  // @Auth(ValidRoles.admin)
-  // privateRoute3(@GetUser() user: User) {
-  //   return {
-  //     ok: true,
-  //     user,
-  //   };
-  // }
+  @Get('/new/private/role')
+  @Auth(ValidRoles.admin) // Usando compose decorator from nest docs
+  privateRoute3(@GetUser() user: User) {
+    return {
+      ok: true,
+      user,
+    };
+  }
 }
