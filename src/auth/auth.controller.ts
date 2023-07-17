@@ -37,11 +37,11 @@ export class AuthController {
     return this.authService.login(loginUserDto);
   }
 
-  // @Get('check-status')
-  // @Auth()
-  // checkAuthStatus(@GetUser() user: User) {
-  //   return this.authService.checkAuthStatus(user);
-  // }
+  @Get('check-status')
+  @Auth()
+  checkAuthStatus(@GetUser() user: User) {
+    return this.authService.checkAuthStatus(user);
+  }
 
   @Get('private')
   @UseGuards(AuthGuard())

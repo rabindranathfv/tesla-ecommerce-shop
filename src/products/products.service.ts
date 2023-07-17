@@ -14,7 +14,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ProductImage } from './entities/product-image.entity';
-import { query } from 'express';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -27,23 +27,22 @@ export class ProductsService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, user: User) {
     try {
-      const { images = [] } = createProductDto;
-      const product = await this.productRepository.create({
-        ...createProductDto,
-        images: images.map((img) =>
-          this.productImageRepository.create({ url: img }),
+      const { images = [], ...productDetails } = createProductDto;
+
+      const product = this.productRepository.create({
+        ...productDetails,
+        images: images.map((image) =>
+          this.productImageRepository.create({ url: image }),
         ),
+        user,
       });
+
       await this.productRepository.save(product);
 
       return { ...product, images };
     } catch (error) {
-      console.log(
-        '🚀 ~ file: products.service.ts:19 ~ ProductsService ~ create ~ error:',
-        error,
-      );
       this.handleDBExceptions(error);
     }
   }
@@ -51,6 +50,10 @@ export class ProductsService {
   async findAll(paginationDto: PaginationDto) {
     try {
       const { limit = 10, offset = 0 } = paginationDto;
+      console.log(
+        '🚀 ~ file: products.service.ts:54 ~ ProductsService ~ findAll ~ paginationDto:',
+        paginationDto,
+      );
       const products = await this.productRepository.find({
         take: limit,
         skip: offset,
@@ -59,7 +62,7 @@ export class ProductsService {
         },
       });
 
-      return products.map((product) => ({
+      return products?.map((product) => ({
         ...product,
         images: product.images.map((img) => img.url),
       }));
@@ -117,7 +120,7 @@ export class ProductsService {
     }
   }
 
-  async update(pid: string, updateProductDto: UpdateProductDto) {
+  async update(pid: string, updateProductDto: UpdateProductDto, user: User) {
     const queryRunner = await this.dataSource.createQueryRunner();
     try {
       const { images, ...productUpd } = updateProductDto;
@@ -145,6 +148,7 @@ export class ProductsService {
         });
       }
 
+      product.user = user;
       await queryRunner.manager.save(product);
       await queryRunner.commitTransaction();
       await queryRunner.release();
