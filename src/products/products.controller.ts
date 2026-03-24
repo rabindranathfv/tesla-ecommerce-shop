@@ -51,7 +51,7 @@ export class ProductsController {
     return await this.productsService.findAll(paginationDto);
   }
 
-  @Auth(ValidRoles.user)
+  @Auth(ValidRoles.user, ValidRoles.admin)
   @Get(':criteria')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Find a product by id, title or slug' })
